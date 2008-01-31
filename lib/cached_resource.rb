@@ -8,7 +8,9 @@ module CachedResource
 
   module ClassMethods
     
-    def cached_resource
+    def cached_resource(options = {})
+
+      acts_as_cached(options)
 
       class << self
         def find_with_cache(*arguments)
