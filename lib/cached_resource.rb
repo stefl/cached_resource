@@ -1,6 +1,6 @@
 # ActsAsCachedResource
 
-module ActsAsCachedResource
+module CachedResource
     
   def self.included(receiver)
     receiver.extend(ClassMethods)
@@ -8,7 +8,7 @@ module ActsAsCachedResource
 
   module ClassMethods
     
-    def acts_as_cached_resource
+    def cached_resource
 
       class << self
         def find_with_cache(*arguments)

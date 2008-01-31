@@ -1,3 +1,3 @@
 # Include hook code here
 
-ActiveResource::Base.send :include, ActsAsCachedResource
+ActiveResource::Base.send :include, CachedResource
