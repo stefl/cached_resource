@@ -13,46 +13,40 @@ module CachedResource
       class << self
 
         def find_with_cache(*arguments)
-          scope = arguments.slice!(0)
-          options = arguments.slice!(0) || {}
+          scope = arguments[0]
           case scope
-          when :all   then cached_find_every(options)
-          when :first then cached_find_every(options).first
+          when :all   then cached_find_every(arguments)
+          when :first then cached_find_every(arguments).first
           # TODO should this actually cache something?
           # when :one   then cached_find_one(options)
-          when :one   then find_without_cache(arguments)
-          else             cached_find_single(scope)
+          when :one   then find_without_cache(*arguments)
+          else             cached_find_single(arguments)
           end
         end
 
-        def cached_find_every(options)
+        def cached_find_every(arguments)
+          options = arguments[1] || {}
           prefix_options, query_options = split_options(options[:params])
-          path_as_key = collection_path(prefix_options, query_options)
+          # TODO: handle :from with Symbols
+          path_as_key = options[:from].nil? ?
+                          collection_path(prefix_options, query_options) :
+                          "#{options[:from]}#{query_string(options[:params])}"
           response_elements = nil
           cached_id_array = get_cache(path_as_key) do
-            response_elements = find_without_cache(:all, :params => query_options)
+            response_elements = find_without_cache(*arguments)
             response_elements.collect do |cached_element|
-              #logger.debug "====================================================="
-              #logger.debug "This cached by cached_resource plugin"
-              #logger.debug "key    : #{cached_element.id}"
-              #logger.debug "value  : #{cached_element}"
-              #logger.debug "====================================================="
               set_cache(cached_element.id, cached_element, self.cache_config[:ttl]) 
               cached_element.id
             end  
           end
-          #logger.debug "====================================================="
-          #logger.debug "This cached by cached_resource plugin"
-          #logger.debug "key    : #{path_as_key}"
-          #logger.debug "value  : [#{cached_id_array.join(',')}]"
-          #logger.debug "====================================================="
 
           response_elements || cached_id_array.map { |key| cached_find_single(key) }
         end
 
-        def cached_find_single(scope)
+        def cached_find_single(arguments)
+          scope = arguments[0]
           get_cache(scope) do
-            self.find_without_cache(scope)
+            self.find_without_cache(*arguments)
           end
         end
 
