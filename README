@@ -24,7 +24,7 @@ Now every time you run a find it will hit the cache first then do the rest query
 
 The cached_resource call also takes normal cache_fu options:
 
-cached_resource :ttl => 15.minutes  
+  cached_resource :ttl => 15.minutes  
 
 
 
