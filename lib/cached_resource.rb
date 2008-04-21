@@ -17,30 +17,35 @@ module CachedResource
           case scope
           when :all   then cached_find_every(arguments)
           when :first then cached_find_every(arguments).first
-          # TODO should this actually cache something?
-          # when :one   then cached_find_one(options)
-          when :one   then find_without_cache(*arguments)
+          when :one   then cached_find_one(arguments)
           else             cached_find_single(arguments)
           end
         end
 
         def cached_find_every(arguments)
-          options = arguments[1] || {}
-          prefix_options, query_options = split_options(options[:params])
-          # TODO: handle :from with Symbols
-          path_as_key = options[:from].nil? ?
-                          collection_path(prefix_options, query_options) :
-                          "#{options[:from]}#{query_string(options[:params])}"
+          path_as_key = path_key(arguments)
           response_elements = nil
           cached_id_array = get_cache(path_as_key) do
             response_elements = find_without_cache(*arguments)
             response_elements.collect do |cached_element|
-              set_cache(cached_element.id, cached_element, self.cache_config[:ttl]) 
-              cached_element.id
+              # can only sub cache elements if they have an id
+              if cached_element.attributes.has_key? "id"
+                set_cache(cached_element.id, cached_element, self.cache_config[:ttl]) 
+                cached_element.id
+              else
+                cached_element
+              end
             end  
           end
 
-          response_elements || cached_id_array.map { |key| cached_find_single(key) }
+          response_elements || cached_id_array.map { |key| key.is_a?(String) ? cached_find_single([key]) : key }
+        end
+
+        def cached_find_one(arguments)
+          path_as_key = path_key(arguments)
+          get_cache(path_as_key) do
+            self.find_without_cache(*arguments)
+          end
         end
 
         def cached_find_single(arguments)
@@ -51,6 +56,16 @@ module CachedResource
         end
 
         alias_method_chain :find, :cache
+
+        private
+
+        def path_key(arguments)
+          options = arguments[1] || {}
+          prefix_options, query_options = split_options(options[:params])
+          # TODO: handle :from with Symbols
+          options[:from].nil? ? collection_path(prefix_options, query_options) :
+                                "#{options[:from]}#{query_string(options[:params])}"
+        end
 
       end
     end
