@@ -27,5 +27,6 @@ The cached_resource call also takes normal cache_fu options:
   cached_resource :ttl => 15.minutes  
 
 
+Doug McInnes <doug.mcinnes@latimes.com>
 
 Copyright (c) 2008 Los Angeles Times
