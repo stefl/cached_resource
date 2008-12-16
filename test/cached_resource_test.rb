@@ -1,24 +1,4 @@
-$LOAD_PATH.unshift(File.dirname(__FILE__) + '/../lib')
-
-ENV['RAILS_ENV'] = 'test'
-
-require 'test/unit'
-
-require File.expand_path(File.join(File.dirname(__FILE__), '../../../../config/environment.rb'))
-
-module ActsAsCached
-  module ClassMethods
-    def get_cache
-      yield if block_given?
-    end
-    def set_cache
-    end
-  end
-end
-
-class TestClass < ActiveResource::Base
-  cached_resource
-end
+require File.join(File.dirname(__FILE__), 'helper')
 
 class CachedResourceTest < Test::Unit::TestCase
 

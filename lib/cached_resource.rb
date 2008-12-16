@@ -16,7 +16,7 @@ module CachedResource
           scope = arguments[0]
           case scope
           when :all   then cached_find_every(arguments)
-          when :first then cached_find_every(arguments).first
+          when :first then cached_find_one(arguments)
           when :one   then cached_find_one(arguments)
           else             cached_find_single(arguments)
           end
@@ -38,7 +38,7 @@ module CachedResource
             end  
           end
 
-          response_elements || cached_id_array.map { |key| key.is_a?(String) ? cached_find_single([key]) : key }
+          response_elements || cached_id_array.map { |key| key.is_a?(String) || key.is_a?(Integer) ? cached_find_single([key]) : key }
         end
 
         def cached_find_one(arguments)
@@ -60,11 +60,19 @@ module CachedResource
         private
 
         def path_key(arguments)
+          scope   = arguments[0]
           options = arguments[1] || {}
-          prefix_options, query_options = split_options(options[:params])
-          # TODO: handle :from with Symbols
-          options[:from].nil? ? collection_path(prefix_options, query_options) :
-                                "#{options[:from]}#{query_string(options[:params])}"
+
+          return "#{scope}:" +
+            case from = options[:from]
+            when Symbol
+              custom_method_collection_url(from, options[:params])
+            when String
+              "#{from}#{query_string(options[:params])}"
+            else
+              prefix_options, query_options = split_options(options[:params])
+              collection_path(prefix_options, query_options)
+            end          
         end
 
       end
